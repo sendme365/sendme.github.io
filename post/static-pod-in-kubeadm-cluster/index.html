@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="keywords" content="">
+<meta name="description" content="你猜">
+<meta name="theme-color" content="">
+<title>Static POD in Kubeadm Cluster 配置 | 想你的二十八画</title>
+<link rel="shortcut icon" href="/favicon.ico?v=1587790473262">
+<link rel="stylesheet" href="/styles/main.css">
+<link rel="stylesheet" href="/media/css/pisces.css">
+
+<link rel="stylesheet" href="/media/fonts/font-awesome.css">
+<link
+  href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Rosario:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext"
+  rel="stylesheet" type="text/css">
+
+<link href="/media/hljs/styles/github.css"
+  rel="stylesheet">
+
+<script src="/media/hljs/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/velocity-animate@1.5.0/velocity.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/velocity-animate@1.5.0/velocity.ui.min.js"></script>
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+
+  <meta name="description" content="Static POD in Kubeadm Cluster 配置" />
+  <meta name="keywords" content="K8S" />
+</head>
+
+<body>
+  <div class="head-top-line"></div>
+  <div class="header-box">
+    
+<div class="pisces">
+  <header class="header  ">
+    <div class="blog-header box-shadow-wrapper bg-color " id="header">
+      <div class="nav-toggle" id="nav_toggle">
+        <div class="toggle-box">
+          <div class="line line-top"></div>
+          <div class="line line-center"></div>
+          <div class="line line-bottom"></div>
+        </div>
+      </div>
+      <div class="site-meta">       
+        <div class="site-title">
+          
+            <a href="/" class="brand">
+              <span>想你的二十八画</span>
+            </a>  
+          
+        </div>
+        
+      </div>
+      <nav class="site-nav" id="site_nav">
+        <ul id="nav_ul">
+          
+            
+            
+            <li class="nav-item ">
+              
+              
+                <a href="/" target="_self">
+                  <i class="fa fa-home"></i> 首页
+                </a>
+              
+            </li>
+          
+            
+            
+            <li class="nav-item ">
+              
+              
+                <a href="/archives/" target="_self">
+                  <i class="fa fa-archive"></i> 归档
+                </a>
+              
+            </li>
+          
+            
+            
+            <li class="nav-item ">
+              
+              
+                <a href="/tags/" target="_self">
+                  <i class="fa fa-tags"></i> 标签
+                </a>
+              
+            </li>
+          
+            
+            
+            <li class="nav-item ">
+              
+              
+                <a href="/post/about/" target="_self">
+                  <i class="fa fa-user"></i> 关于
+                </a>
+              
+            </li>
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </header>
+</div>
+
+<script type="text/javascript"> 
+ 
+  let showNav = true;
+
+  let navToggle = document.querySelector('#nav_toggle'),
+  siteNav = document.querySelector('#site_nav');
+  
+  function navClick() {
+    let sideBar = document.querySelector('.sidebar');
+    let navUl = document.querySelector('#nav_ul');
+    navToggle.classList.toggle('nav-toggle-active');
+    siteNav.classList.toggle('nav-menu-active');
+    if (siteNav.classList.contains('nav-menu-active')) {
+      siteNav.style = "height: " + (navUl.children.length * 42) +"px !important";
+    } else {
+      siteNav.style = "";
+    }
+  }
+
+  navToggle.addEventListener('click',navClick);  
+</script>
+  </div>
+  <div class="main-continer">
+    
+    <div
+      class="section-layout pisces ">
+      <div class="section-layout-wrapper">
+        
+
+<div class="sidebar">
+  
+    <div class="sidebar-box box-shadow-wrapper bg-color right-motion" id="sidebar">
+      
+      <div class="sidebar-body pisces" id="sidebar_body">
+        
+      </div>
+    </div>
+  
+</div>
+<script>
+  const SIDEBAR_TITLE_ACTIVE = 'sidebar-title-active';
+  const SIDEBAR_BODY_ACTIVE = 'sidebar-body-active';
+  const SLIDE_UP_IN = 'slide-up-in';
+
+  let sidebar = document.querySelector('#sidebar'),
+  tocSideBar = document.querySelector('#tocSideBar'),
+  metaSideBar = document.querySelector('#metaSideBar'),
+  postToc = document.querySelector('#post_toc'),
+  postSiteMeta = document.querySelector('#post_side_meta'),
+  sidebarTitle = document.querySelector('.sidebar-title'),
+  sidebarBody = document.querySelector('#sidebar_body');
+
+  tocSideBar && tocSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  metaSideBar && metaSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  function toggleSidebar(e) {
+    let currentTitle = document.querySelector("."+SIDEBAR_TITLE_ACTIVE);
+    if (currentTitle == e.srcElement) {
+      return ;
+    }
+    let current, showElement, hideElement;
+    if (e.srcElement == metaSideBar) {
+      showElement = postSiteMeta;
+      hideElement = postToc;
+    } else if (e.srcElement == tocSideBar){
+      showElement = postToc;
+      hideElement = postSiteMeta;
+    }
+    currentTitle.classList.remove(SIDEBAR_TITLE_ACTIVE);
+    e.srcElement.classList.add(SIDEBAR_TITLE_ACTIVE);
+
+    window.Velocity(hideElement, 'stop');
+    window.Velocity(hideElement, 'transition.slideUpOut', {
+      display: 'none',
+      duration: 200,
+      complete: function () {
+        window.Velocity(showElement, 'transition.slideDownIn', {
+          duration: 200
+        });
+      }
+    })
+    hideElement.classList.remove(SIDEBAR_BODY_ACTIVE);
+    showElement.classList.add(SIDEBAR_BODY_ACTIVE);
+  }
+
+  postToc && postToc.addEventListener('transitionend', function() {
+    this.classList.remove(SLIDE_UP_IN);
+  });
+
+  if (sidebarBody) {
+    if (sidebarBody.classList.contains('pisces') || sidebarBody.classList.contains('gemini')) {
+      let hasFix = false;
+      let scrollEl = document.querySelector('.main-continer');
+      let limitTop = document.querySelector('#nav_ul').children.length * 42 + 162;
+      window.addEventListener('scroll', function(e) {
+        if (document.scrollingElement.scrollTop >= limitTop) {
+          if (!hasFix) {
+            sidebar.classList.add('sidebar-fixed');
+            hasFix = true;
+          }
+        } else {
+          if (hasFix) {
+            sidebar.classList.remove('sidebar-fixed');
+            hasFix = false;
+          }
+        }
+      });
+    }
+  }
+  
+</script>
+        <div class="section-box box-shadow-wrapper">
+          <div class="section bg-color post post-page">
+            <header class="post-header">
+  <h1 class="post-title">
+    <a class="post-title-link" href="https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/">
+      Static POD in Kubeadm Cluster 配置
+    </a>
+  </h1>
+  <div class="post-meta">
+    
+    <span class="meta-item pc-show">
+      <i class="fa fa-calendar-o"></i>
+      <span>发布于</span>
+      <span>2019-08-16</span>
+      <span class="post-meta-divider pc-show">|</span>
+    </span>
+    
+    <span class="meta-item">
+      <i class="fa fa-folder-o"></i>
+      <span class="pc-show">分类于</span>
+      
+      
+      <a href="https://sendme365.github.io/tag/k8s/">
+        <span>K8S</span>
+      </a>
+      
+      
+    </span>
+    <span class="post-meta-divider">|</span>
+    
+    <span class="meta-item">
+      <i class="fa fa-clock-o"></i>
+      <span>1分钟</span>
+    </span>
+    <span class="meta-item">
+      <span class="post-meta-divider">|</span>
+      <i class="fa fa-file-word-o"></i>
+      <span>132<span class="pc-show">字数</span></span>
+    </span>
+    
+  </div>
+</header>
+            <div class="post-body next-md-body" id="post_body">
+              <p>K8S 使用了kubeadm搭建</p>
+<pre><code class="language-shell">ssh node
+mkdir /etc/kubelet.d/
+</code></pre>
+<pre><code class="language-YAML"># Run this[]() command on the node where kubelet is running
+cat &lt;&lt;EOF &gt;/etc/kubelet.d/static-web.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web
+  labels:
+    role: myrole
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+EOF
+</code></pre>
+<p>#找到kubelet service的配置文件 /etc/systemd/system/kubelet.service.d/</p>
+<pre><code class="language-shell">root@worker-0:/etc/systemd/system/kubelet.service.d# systemctl status kubelet
+● kubelet.service - kubelet: The Kubernetes Node Agent
+   Loaded: loaded (/lib/systemd/system/kubelet.service; enabled; vendor preset: enabled)
+  Drop-In: /etc/systemd/system/kubelet.service.d
+           └─10-kubeadm.conf
+</code></pre>
+<p>#添加--pod-manifest-path=<the directory> 在最后一行</p>
+<pre><code> $KUBELET_EXTRA_ARGS --pod-manifest-path=/etc/kubernetes.d/	
+</code></pre>
+
+            </div>
+            <div class="post-footer">
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong>本文作者：</strong>
+      
+    </li>
+    <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/" title="Static POD in Kubeadm Cluster 配置">https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong>
+      本博客所有文章除特别声明外，均采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i> BY-NC-SA</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+  <div class="tags">
+    
+      <a href="https://sendme365.github.io/tag/k8s/"># K8S</a>
+    
+  </div>
+  <div class="nav">
+    <div class="nav-prev">
+      
+        <i class="fa fa-chevron-left"></i>
+        <a class="nav-pc-next" title="Docker Desktop for mac 代理" href="https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/">Docker Desktop for mac 代理</a class="nav-pc-next">
+        <a class="nav-mobile-prev" title="Docker Desktop for mac 代理" href="https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/">上一篇</a>
+      
+    </div>
+    <div class="nav-next">
+      
+        <a class="nav-pc-next" title="Google Container Registry" href="https://sendme365.github.io/post/google-container-registry/">Google Container Registry</a>
+        <a class="nav-mobile-next" title="Google Container Registry" href="https://sendme365.github.io/post/google-container-registry/">下一篇</a>
+        <i class="fa fa-chevron-right"></i>
+      
+    </div>
+  </div>
+</div>
+            
+  
+    
+      <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: '325eb306a64a2cf914e4',
+    clientSecret: '4d59f8ce2ca5b2d70df88b7187ee55343248e465',
+    repo: 'sendme365.github.io',
+    owner: 'sendme365',
+    admin: ['sendme365'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+    
+    
+  
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-box">
+  <footer class="footer">
+    <div class="copyright">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | © 2019-2020 Theme By <a href="https://github.com/hsxyhao/gridea-theme-next" target="_blank">HsxyHao</a>
+    </div>
+    <div class="poweredby">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> and  <a href="https://sendme365.github.io" target="_blank">Sendme</a>
+    </div>
+  </footer>
+  
+  
+  <div class="pisces back-to-top" id="back_to_top">
+    <i class="fa fa-arrow-up"></i>
+    
+    <span class="scrollpercent">
+      <span id="back_to_top_text">0</span>%
+    </span>
+    
+  </div>
+  
+    <div class="bg-img">
+      <img src="" />
+    </div>
+  
+  
+  
+    
+
+  
+</div>
+<script>
+
+  let sideBarOpen = 'sidebar-open';
+  let body = document.body;
+  let back2Top = document.querySelector('#back_to_top'),
+  back2TopText = document.querySelector('#back_to_top_text'),
+  drawerBox = document.querySelector('#drawer_box'),
+  rightSideBar = document.querySelector('.sidebar'),
+  viewport = document.querySelector('body');
+
+  function scrollAnimation(currentY, targetY) {
+   
+    let needScrollTop = targetY - currentY
+    let _currentY = currentY
+    setTimeout(() => {
+      const dist = Math.ceil(needScrollTop / 10)
+      _currentY += dist
+      window.scrollTo(_currentY, currentY)
+      if (needScrollTop > 10 || needScrollTop < -10) {
+        scrollAnimation(_currentY, targetY)
+      } else {
+        window.scrollTo(_currentY, targetY)
+      }
+    }, 1)
+  }
+
+  back2Top.addEventListener("click", function(e) {
+    scrollAnimation(document.scrollingElement.scrollTop, 0);
+    e.stopPropagation();
+    return false;
+  });
+  
+  window.addEventListener('scroll', function(e) {
+    let percent = document.scrollingElement.scrollTop / (document.scrollingElement.scrollHeight - document.scrollingElement.clientHeight) * 100;
+    if (percent > 1 && !back2Top.classList.contains('back-top-active')) {
+      back2Top.classList.add('back-top-active');
+    }
+    if (percent == 0) {
+      back2Top.classList.remove('back-top-active');
+    }
+    if (back2TopText) {
+      back2TopText.textContent = Math.floor(percent);
+    }
+  });
+
+  
+  let hasCacu = false;
+  window.onresize = function() {
+    if (window.width > 991) {
+      calcuHeight();
+    } else {
+      hasCacu = false;
+    }
+  }
+
+  function calcuHeight() {
+    // 动态调整站点概览高度
+    if (!hasCacu && back2Top.classList.contains('pisces') || back2Top.classList.contains('gemini')) {
+      let sideBar = document.querySelector('.sidebar');
+      let navUl = document.querySelector('#site_nav');
+      sideBar.style = 'margin-top:' + (navUl.offsetHeight + navUl.offsetTop + 15) + 'px;';
+      hasCacu = true;
+    }
+  }
+  calcuHeight();
+  
+  let open = false, MOTION_TIME = 300, RIGHT_MOVE_DIS = '320px';
+
+  if (drawerBox) {
+    let rightMotions = document.querySelectorAll('.right-motion');
+    let right = drawerBox.classList.contains('right');
+
+    let transitionDir = right ? "transition.slideRightIn" : "transition.slideLeftIn";
+
+    let openProp, closeProp;
+    if (right) {
+      openProp = {
+        paddingRight: RIGHT_MOVE_DIS 
+      };
+      closeProp = {
+        paddingRight: '0px'
+      };
+    } else {
+      openProp = {
+        paddingLeft: RIGHT_MOVE_DIS 
+      };
+      closeProp = {
+        paddingLeft: '0px'
+      };
+    }
+
+    drawerBox.onclick = function() {
+      open = !open;
+      window.Velocity(rightSideBar, 'stop');
+      window.Velocity(viewport, 'stop');
+      window.Velocity(rightMotions, 'stop');
+      if (open) {
+        window.Velocity(rightSideBar, {
+          width: RIGHT_MOVE_DIS
+        }, {
+          duration: MOTION_TIME,
+          begin: function() {
+            window.Velocity(rightMotions, transitionDir,{ });
+          }
+        })
+        window.Velocity(viewport, openProp,{
+          duration: MOTION_TIME
+        });
+      } else {
+        window.Velocity(rightSideBar, {
+          width: '0px'
+        }, {
+          duration: MOTION_TIME,
+          begin: function() {
+            window.Velocity(rightMotions, {
+              opacity: 0
+            });
+          }
+        })
+        window.Velocity(viewport, closeProp ,{
+          duration: MOTION_TIME
+        });
+      }
+      for (let i = 0; i < drawerBox.children.length; i++) {
+        drawerBox.children[i].classList.toggle('muse-line');
+      }
+      drawerBox.classList.toggle(sideBarOpen);
+    }
+  }
+
+  // 链接跳转
+  let newWindow = ''
+  if (newWindow === 'true') {
+    let links = document.querySelectorAll('.post-body a')
+    links.forEach(item => {
+      if (!item.classList.contains('btn')) {
+        item.setAttribute("target","_blank");
+      }
+    })
+  }
+  // 代码高亮
+  hljs.initHighlightingOnLoad();
+
+</script>
+    <div class="light-box" id="light_box"></div>
+<script>
+  let imgs = document.querySelectorAll('.post-body img');
+  let lightBox = document.querySelector('#light_box');
+  lightBox.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+  })
+  lightBox.addEventListener('mousewheel', (e) => {
+    e.preventDefault()
+  })
+  let width = window.innerWidth * 0.8;
+  lightBox.onclick = () => {
+    let img = lightBox.querySelector('img');
+    lightBox.style = '';
+    img && img.remove();
+  }
+  imgs.forEach(item => {
+    item.onclick = function (e) {
+      let lightImg = document.createElement('img');
+      lightImg.src = this.src;
+      lightBox.style = `height: 100%; opacity: 1; background-color: rgba(0, 0, 0, 0.5);cursor: zoom-out;`;
+      lightImg.style = `width: ${width}px; border: 1px solid #fff; border-radius: 2px;`;
+      lightImg.onclick = function () {
+        lightBox.style = '';
+        this.remove();
+      }
+      lightBox.append(lightImg);
+    }
+  })
+</script>
+  </div>
+</body>
+<input hidden id="copy" />
+<script>
+  //拿来主义(真香)^_^，Clipboard 实现摘自掘金 https://juejin.im/post/5aefeb6e6fb9a07aa43c20af
+  window.Clipboard = (function (window, document, navigator) {
+    var textArea,
+      copy;
+
+    // 判断是不是ios端
+    function isOS() {
+      return navigator.userAgent.match(/ipad|iphone/i);
+    }
+    //创建文本元素
+    function createTextArea(text) {
+      textArea = document.createElement('textArea');
+      textArea.value = text;
+      textArea.style.width = 0;
+      textArea.style.height = 0;
+      textArea.clientHeight = 0;
+      textArea.clientWidth = 0;
+      document.body.appendChild(textArea);
+    }
+    //选择内容
+    function selectText() {
+      var range,
+        selection;
+
+      if (isOS()) {
+        range = document.createRange();
+        range.selectNodeContents(textArea);
+        selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        textArea.setSelectionRange(0, 999999);
+      } else {
+        textArea.select();
+      }
+    }
+
+    //复制到剪贴板
+    function copyToClipboard() {
+      try {
+        document.execCommand("Copy")
+      } catch (err) {
+        alert("复制错误！请手动复制！")
+      }
+      document.body.removeChild(textArea);
+    }
+
+    copy = function (text) {
+      createTextArea(text);
+      selectText();
+      copyToClipboard();
+    };
+
+    return {
+      copy: copy
+    };
+  })(window, document, navigator);
+
+  function copyCode(e) {
+    if (e.srcElement.tagName === 'SPAN' && e.srcElement.classList.contains('copy-code')) {
+      let code = e.currentTarget.querySelector('code');
+      var text = code.innerText;
+      if (e.srcElement.textContent === '复制成功') {
+        console.log('复制操作频率过高');
+        return;
+      }
+      e.srcElement.textContent = '复制成功';
+      (function (elem) {
+        setTimeout(() => {
+          if (elem.textContent === '复制成功') {
+            elem.textContent = '复制代码'
+          }
+        }, 1000);
+      })(e.srcElement)
+      Clipboard.copy(text);
+    }
+  }
+
+  let pres = document.querySelectorAll('pre');
+  pres.forEach(pre => {
+    let code = pre.querySelector('code');
+    let copyElem = document.createElement('span');
+    copyElem.classList.add('copy-code');
+    copyElem.textContent = '复制代码';
+    pre.appendChild(copyElem);
+    pre.onclick = copyCode
+  })
+</script>
+<script src="/media/js/motion.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/cferdinandi/smooth-scroll/dist/smooth-scroll.polyfills.min.js"></script>
+<script>
+  var scroll = new SmoothScroll('a[href*="#"]', {
+    speed: 500
+  });
+</script>
+
+<!-- <div class="search-mask" id="search_mask">
+  <div class="search-box">
+    <div class="search-title">
+      <i class="fa fa-search"></i>
+      <div class="input-box">
+        <input type="text" placeholder="搜索">
+      </div>
+      <i class="fa fa-times-circle"></i>
+    </div>
+    <div class="result">
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/dnsmasq/"" data-c="
+          &lt;p&gt;address=/freehao123.com/123.123.123.123&lt;/p&gt;
+">dnsmasq</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/frp-qun-hui-nei-wang-chuan-tou/"" data-c="
+          &lt;p&gt;GCP VPS IP：aa.aa.aa.aa&lt;br&gt;
+NAS IP：bb.bb.bb.bb&lt;/p&gt;
+&lt;p&gt;github: &lt;code&gt;https://github.com/fatedier/frp&lt;/code&gt;&lt;br&gt;
+download: &lt;code&gt;wget https://github.com/fatedier/frp/releases/download/v0.29.1/frp_0.29.1_linux_amd64.tar.gz&lt;/code&gt;&lt;/p&gt;
+&lt;h1 id=&#34;vps&#34;&gt;VPS:&lt;/h1&gt;
+&lt;h2 id=&#34;设置frp服务&#34;&gt;设置frp服务&lt;/h2&gt;
+&lt;p&gt;切换到root &lt;code&gt;sudo su -&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;cp frps.service /usr/lib/systemd/system&lt;/code&gt;&lt;br&gt;
+注释掉#User=nobody&lt;/p&gt;
+&lt;h2 id=&#34;frpsini&#34;&gt;frps.ini&lt;/h2&gt;
+&lt;pre&gt;&lt;code&gt;[common]
+bind_port = 7000
+vhost_http_port = 80
+vhost_https_port = 443
+token = 23123432132  #token 随机生成 或者不使用都可以
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;复制文件&#34;&gt;复制文件&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;cp frps /usr/bin/frps&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;cp frps.ini /etc/frp/frps.ini&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;设置开机自启动&#34;&gt;设置开机自启动&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;systemctl enable frps&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;systemctl restart frps&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;systemctl statu frps&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;开启本地防火墙&#34;&gt;开启本地防火墙&lt;/h2&gt;
+&lt;pre&gt;&lt;code&gt;iptables -I INPUT -p tcp --dport 7000 -j ACCEPT #用于frp
+iptables -I INPUT -p tcp --dport 6000 -j ACCEPT #用于ssh
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;运行后添加到启动项中使开机生效&lt;br&gt;
+&lt;code&gt;vi /etc/rc.local&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;GCP console firewall 添加 range 0.0.0.0/0 and tcp 7000，6000 端口 允许&lt;/p&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;nas&#34;&gt;NAS:&lt;/h1&gt;
+&lt;p&gt;download: &lt;code&gt;wget https://github.com/fatedier/frp/releases/download/v0.29.1/frp_0.29.1_linux_amd64.tar.gz&lt;/code&gt;&lt;br&gt;
+切换到root &lt;code&gt;sudo su -&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;frpcini&#34;&gt;frpc.ini&lt;/h2&gt;
+&lt;pre&gt;&lt;code&gt;[common]
+server_addr = aa.aa.aa.aa
+server_port = 7000
+token = 23123432132 #token 随机生成 或者不使用都可以，但需要和frps中匹配
+
+[ssh]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 22
+remote_port = 6000  #跳转端口 需要开通GCP VPN本地系统防火墙和GCP防火墙
+
+[dsm]
+type = http
+local_ip = 127.0.0.1
+local_port = 5000
+custom_domains = dsm.aa.com  #如有域名，添加
+
+[photo]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 443
+remote_port = 8000
+custom_domains = photo.aa.com
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;复制文件-2&#34;&gt;复制文件&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;cp frps /usr/bin/frpc&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;cp frps.ini /etc/frp/frpc.ini&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;启动frpc&#34;&gt;启动frpc&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;nohup /usr/bin/frpc -c /root/frp/frpc.ini &amp;amp;&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;设置开机自启动-2&#34;&gt;设置开机自启动&lt;/h2&gt;
+&lt;p&gt;DSM -&amp;gt; 控制面板 -&amp;gt; 计划任务 -&amp;gt; 新增 -&amp;gt; 触法任务 -&amp;gt; 任务设置 &lt;code&gt;bash nohup /usr/bin/frpc -c /root/frp/frpc.ini &amp;amp;&lt;/code&gt;&lt;/p&gt;
+">Frp 群晖 内网穿透</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/fan-yu-ming-zheng-shu/"" data-c="
+          &lt;p&gt;泛域名： &lt;code&gt;*.zeromonster.com&lt;/code&gt;&lt;br&gt;
+域名提供商： &lt;code&gt;namesilo&lt;/code&gt;&lt;br&gt;
+Let&#39;s Encrypt： 提供免费证书。&lt;/p&gt;
+&lt;p&gt;因为需要验证域名所有权。所以需要通过namesilo的DNS API做交换验证。其它域名商DNS API 可以通过这里查看 &lt;code&gt;https://github.com/Neilpang/acme.sh/wiki/dnsapi&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;namesilo DNS API key： &lt;code&gt;https://www.namesilo.com/account/api-manager&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;下载安装acme 工具用于申请证书 &lt;code&gt;curl https://get.acme.sh | sh&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;[Tue Nov 12 13:49:08 CST 2019] Installing from online archive.
+[Tue Nov 12 13:49:08 CST 2019] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gz
+[Tue Nov 12 13:49:11 CST 2019] Extracting master.tar.gz
+[Tue Nov 12 13:49:12 CST 2019] It is recommended to install socat first.
+[Tue Nov 12 13:49:12 CST 2019] We use socat for standalone server if you use standalone mode.
+[Tue Nov 12 13:49:12 CST 2019] If you don&#39;t use standalone mode, just ignore this warning.
+[Tue Nov 12 13:49:12 CST 2019] Installing to /Users/i333878/.acme.sh
+[Tue Nov 12 13:49:12 CST 2019] Installed to /Users/i333878/.acme.sh/acme.sh
+[Tue Nov 12 13:49:12 CST 2019] Installing alias to &#39;/Users/i333878/.zshrc&#39;
+[Tue Nov 12 13:49:12 CST 2019] OK, Close and reopen your terminal to start using acme.sh
+[Tue Nov 12 13:49:12 CST 2019] Installing cron job
+crontab: no crontab for i333878
+crontab: no crontab for i333878
+[Tue Nov 12 13:49:16 CST 2019] Good, bash is found, so change the shebang to use bash as preferred.
+[Tue Nov 12 13:49:17 CST 2019] OK
+[Tue Nov 12 13:49:17 CST 2019] Install success!
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;打开新窗口或者&lt;code&gt;source ~/.zshrc&lt;/code&gt; 重现载入设置。 确保acme.sh -h工作&lt;/p&gt;
+&lt;p&gt;设置环境变量：&lt;code&gt;export Namesilo_Key=59f81exxxxxxxxxxxx&lt;/code&gt;&lt;br&gt;
+生成证书：&lt;code&gt;acme.sh --issue --dns dns_namesilo --dnssleep 900 -d zeromonster.com -d &#39;*.zeromonster.com&#39;&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;[Tue Nov 12 14:16:08 CST 2019] Empty record id, it seems no such record.
+[Tue Nov 12 14:16:08 CST 2019] Removed: Success
+[Tue Nov 12 14:16:08 CST 2019] Verify finished, start to sign.
+[Tue Nov 12 14:16:08 CST 2019] Lets finalize the order, Le_OrderFinalize: https://acme-v02.api.letsencrypt.org/acme/finalize/71596892/1493372364
+[Tue Nov 12 14:16:09 CST 2019] Download cert, Le_LinkCert: https://acme-v02.api.letsencrypt.org/acme/cert/04552405240b5b4451e67864a7df3eabddaf
+[Tue Nov 12 14:16:10 CST 2019] Cert success.
+-----BEGIN CERTIFICATE-----
+MIIFaTCCBFGgAwIBAgISBFUkBSQLW0RR5nhkp98+q92vMA0GCSqGSIb3DQEBCwUA
+...
+ZMpV9tycrwyrBktorlYXSOjWBzmCslAnuJIQuc1Sxq2U41HajkpSr767KKU5
+-----END CERTIFICATE-----
+[Tue Nov 12 14:16:10 CST 2019] Your cert is in  /Users/.acme.sh/zeromonster.com/zeromonster.com.cer
+[Tue Nov 12 14:16:10 CST 2019] Your cert key is in  /Users/.acme.sh/zeromonster.com/zeromonster.com.key
+[Tue Nov 12 14:16:10 CST 2019] The intermediate CA cert is in  /Users/.acme.sh/zeromonster.com/ca.cer
+[Tue Nov 12 14:16:10 CST 2019] And the full chain certs is there:  /Users/.acme.sh/zeromonster.com/fullchain.cer
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;其中证书文件 fullchain.cer 密钥文件 zeromonster.com.key 以后在使用别人服务时要填写SSL证书内容就是这两个。&lt;/p&gt;
+&lt;p&gt;证书过期&lt;br&gt;
+Let&#39;s Encrypt 证书的有效期是三个月。但我们通过脚本acme.sh启动就不用担心，因为它写入了定时命令。用 crontab -l&lt;br&gt;
+&lt;code&gt;acme.sh --cron --home &amp;quot;/Users/.acme.sh/&amp;quot; &amp;gt; /dev/null&lt;/code&gt;&lt;/p&gt;
+">泛域名证书</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/vault-in-gke/"" data-c="
+          &lt;p&gt;GOOGLE_CLOUD_PROJECT=xxxxxxxxx&lt;br&gt;
+storage =vault-storage-ted&lt;br&gt;
+--zone asia-east1&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Create Storage&lt;br&gt;
+&lt;code&gt;gsutil mb &amp;quot;gs://${GOOGLE_CLOUD_PROJECT}-vault-storage&amp;quot;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Create KMS&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code&gt;# enable KMS API
+    gcloud services enable \
+    cloudapis.googleapis.com \
+    cloudkms.googleapis.com \
+    cloudresourcemanager.googleapis.com \
+    cloudshell.googleapis.com \
+    container.googleapis.com \
+    containerregistry.googleapis.com \
+    iam.googleapis.com
+    
+# create keyrings and keys
+gcloud kms keyrings create vault --location asia-east1
+
+gcloud kms keys create vault-init \
+    --location asia-east1 \
+    --keyring vault \
+    --purpose encryption
+&lt;/code&gt;&lt;/pre&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;Create GCP Service Account&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code&gt;    export SERVICE_ACCOUNT=&amp;quot;vault-server@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com&amp;quot;
+    gcloud iam service-accounts create vault-server \
+    --display-name &amp;quot;vault service account&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+">Vault in GKE</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/ccka/"" data-c="
+          &lt;ol&gt;
+&lt;li&gt;Create a pod with a Liveness and Readiness probes&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-exec
+spec:
+  containers:
+  - name: liveness
+    image: k8s.gcr.io/busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5
+      periodSeconds: 5
+		readinessProbe:
+			exec:
+				command:
+				- cat
+				- /tmp/healthy
+			initialDelaySeconds: 5
+			periodSeconds: 5
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;Create a daemon set - Create a daemon set and change the update strategy to do a rolling update with a delay of 30 seconds between each update.&lt;br&gt;
+https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/&lt;br&gt;
+Step 1: Checking DaemonSet RollingUpdate update strategy&lt;br&gt;
+&lt;code&gt;kubectl get ds/&amp;lt;daemonset-name&amp;gt; -o go-template=&#39;{{.spec.updateStrategy.type}}{{&amp;quot;\n&amp;quot;}}&#39;&lt;/code&gt;&lt;br&gt;
+The output from both commands should be:&lt;br&gt;
+&lt;code&gt;RollingUpdate&lt;/code&gt;&lt;br&gt;
+Step 2: Creating a DaemonSet with RollingUpdate update strategy&lt;br&gt;
+&lt;code&gt;kubectl apply -f ds-v2.yaml&lt;/code&gt;&lt;br&gt;
+Step 3: Updating a DaemonSet template&lt;br&gt;
+&lt;code&gt;kubectl edit ds/&amp;lt;daemonset-name&amp;gt;&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;kubectl patch ds/&amp;lt;daemonset-name&amp;gt; -p=&amp;lt;strategic-merge-patch&amp;gt;&lt;/code&gt;&lt;br&gt;
+Updating only the container image&lt;br&gt;
+&lt;code&gt;kubectl set image ds/&amp;lt;daemonset-name&amp;gt; &amp;lt;container-name&amp;gt;=&amp;lt;container-new-image&amp;gt;&lt;/code&gt;&lt;br&gt;
+Step 4: Watching the rolling update status&lt;br&gt;
+&lt;code&gt;kubectl rollout status ds/&amp;lt;daemonset-name&amp;gt;&lt;/code&gt;&lt;br&gt;
+The output&lt;br&gt;
+&lt;code&gt;daemonset &amp;quot;&amp;lt;daemonset-name&amp;gt;&amp;quot; successfully rolled out&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;pre&gt;&lt;code&gt;	3） 日志文件挂载到主机目录:  
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+	name: test-pd 
+spec:
+	containers:
+	- image: gcr.io/google_containers/test-webserver
+	  name: test-container
+	volumeMounts:
+	- mountPath: /log
+	  name: log-volume 
+	volumes:
+	- name: log-volume 
+	  hostPath:
+	# directory location on host 
+		path: /var/k8s/log
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;4）&lt;br&gt;
+kubectl run {deployment} --image={image} --replicas={rep.}&lt;br&gt;
+kubectl set image dployment/nginx-deployment nginx=nginx:1.91&lt;br&gt;
+kubectl set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=512mi&lt;br&gt;
+#升级策略&lt;br&gt;
+minReadySeconds: 5&lt;br&gt;
+strategy:&lt;br&gt;
+type: RollingUpdate&lt;br&gt;
+rollingUpdate:&lt;br&gt;
+maxSurge: 1 #默认25%&lt;br&gt;
+maxUnavailable: 1 #默认25%&lt;/p&gt;
+&lt;p&gt;5#&lt;/p&gt;
+&lt;h1 id=&#34;暂停deployment&#34;&gt;暂停Deployment:&lt;/h1&gt;
+&lt;p&gt;$ kubectl rollout pause deployment/nginx-deployment&lt;/p&gt;
+&lt;h1 id=&#34;恢复deployment&#34;&gt;恢复Deployment:&lt;/h1&gt;
+&lt;p&gt;$ kubectl rollout resume deployment/nginx-deployment&lt;/p&gt;
+&lt;h1 id=&#34;查询升级状态&#34;&gt;查询升级状态:&lt;/h1&gt;
+&lt;p&gt;$ kubectl rollout status deployment/nginx-deployment&lt;/p&gt;
+&lt;h1 id=&#34;查询升级历史&#34;&gt;查询升级历史:&lt;/h1&gt;
+&lt;p&gt;$ kubectl rollout history deploy/nginx-deployment&lt;br&gt;
+$ kubectl rollout history deploy/nginx-deployment --revision=2&lt;/p&gt;
+&lt;h1 id=&#34;回滚&#34;&gt;回滚:&lt;/h1&gt;
+&lt;p&gt;$ kubectl rollout undo deployment/nginx-deployment --to-revision=2&lt;/p&gt;
+&lt;p&gt;6#&lt;br&gt;
+kubectl scale deployment nginx-deployment --replicas=10&lt;/p&gt;
+&lt;p&gt;#7 **** 下载 nsloop 镜像&lt;br&gt;
+wget https://kubernetes.io/examples/admin/dns.yaml&lt;br&gt;
+--nslookup kubernetes.default&lt;/p&gt;
+&lt;p&gt;#8 生成kueconfig 文件&lt;br&gt;
+修改cluster&lt;br&gt;
+kubectl config set-cluster kubernetes&lt;br&gt;
+--certificate-authority=/path/to/ca --embed-certs=true --server=${KUBE_APISERVER} --kubeconfig=/kubeconfig/filename&lt;br&gt;
+• 修改user&lt;br&gt;
+kubectl config set-credentials testuser&lt;br&gt;
+--client-certificate=/path/to/cert --client-key=/path/to/private_key --embed-certs=true --kubeconfig=/kubeconfig/filename&lt;br&gt;
+• 修改context&lt;br&gt;
+kubectl config set-context default&lt;br&gt;
+--cluster=kubernetes --user=testuser --kubeconfig=test.kubeconfig&lt;br&gt;
+• 设置默认context&lt;br&gt;
+kubectl config use-context default --kubeconfig=/kubeconfig/filename&lt;/p&gt;
+&lt;p&gt;#8 驱逐Node 上POD&lt;br&gt;
+kubectl drain node_name --ignore-daemonsets=true&lt;br&gt;
+kubectl uncordon node_name =&amp;gt; 恢复Node&lt;/p&gt;
+&lt;p&gt;7#&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu-aff
+  labels:
+    os: centos
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:   #第一条件
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: beta.kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+      preferredDuringSchedulingIgnoredDuringExecution:  #第二个条件
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - hdd
+  containers:
+  - name: ubuntu-aff
+    image: 10.3.1.15:5000/ubuntu:16.04
+    env:  #在容器内配置环境变量
+    - name: Test
+      value: &amp;quot;7890&amp;quot;
+    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]
+    
+----
+kubernetes内置标签：
+
+    ○ kubernetes.io/hostname
+
+    ○ failure-domain.beta.kubernetes.io/zone
+
+    ○ failure-domain.beta.kubernetes.io/region
+
+    ○ beta.kubernetes.io/instance-type
+
+    ○ beta.kubernetes.io/os
+
+    ○ beta.kubernetes.io/arch
+
+---
+#pod affinity的参照Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-flag
+  labels:    # 定义多个标签，以便其它pod设置亲和与互斥
+    app: nginx
+    security: s1
+spec:
+  containers:
+  - name: nginx-1-10
+    image: 10.3.1.15:5000/nginx:1.10
+    ports:
+    - containerPort: 80
+---
+#创建一个pod，与参照的pod必须要在同一个node上，即，具有亲和性。
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-pod-affinity
+  labels:
+    os: ubuntu
+spec:
+  affinity: #亲和性设置
+    podAffinity:  #设置pod亲和性
+      requiredDuringSchedulingIgnoredDuringExecution: #必须要满足的条件
+      - labelSelector:  #与哪个pod有亲和性，在此设置此pod具有的标签
+          matchExpressions:  #要匹配的pod的，标签定义，如果定义了多个matchExpressions，则所有标签必须同时满足。
+          - key: security #标签的key
+            operator: In  #操作符
+            values:
+            - s1  #标签的值，即拥有label security=s1
+        topologyKey: kubernetes.io/hostname #节点所属拓朴域
+  #上面表达的意思是此处创建的Pod必须要与拥有标签security=s1的pod在同一Node上.
+  containers:
+  - name: wish-pod-affinity
+    image: 10.3.1.15:5000/ubuntu:16.04
+    env: 
+    - name: Test
+      value: &amp;quot;7890&amp;quot;
+    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]
+    
+ 
+   # 因为pod是属于某个命名空间的，所以设置符合条件的目标Pod时，还可以指定哪个命名空间或全部命名空间里的Pod，
+   #  namespace的定义与labelSelector同级，如果不指定命名空间，则与此处创建的pod在一个namespace之中
+---
+#创建一个pod，与参照的pod，一定不能在同一个Node上，即具有互斥性
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-pod-antiffinity
+  labels:
+    os: ubuntu
+spec:
+  affinity: #亲和性设置
+   podAntiAffinity:  #设置pod反亲和性
+      requiredDuringSchedulingIgnoredDuringExecution: #必须要满足的条件
+      - labelSelector:  #与哪个pod有反亲和性，互斥性，在此设置此pod具有的标签
+          matchExpressions:
+          - key: app #标签的key
+            operator: In
+            values:
+            - nginx  #标签的值，即拥有label app=nginx
+        topologyKey: kubernetes.io/hostname  #节点所属拓朴域
+  #上面表达的意思是此处创建的Pod必须要与拥有标签app=nginx的pod不在在同一个Node上.如果所有 Node将无法满足条件，则创建的pod一直处于Pending状态。
+  containers:
+  - name: wish-pod-antiaffinity
+    image: 10.3.1.15:5000/ubuntu:16.04
+    env: 
+    - name: Test
+      value: &amp;quot;7890&amp;quot;
+    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]
+&lt;/code&gt;&lt;/pre&gt;
+">CKA</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/"" data-c="
+          &lt;!-- more --&gt;
+&lt;p&gt;配置Daemon&lt;br&gt;
+{&amp;quot;debug&amp;quot;:true,&amp;quot;registry-mirrors&amp;quot;:[&amp;quot;https://docker.mirrors.ustc.edu.cn&amp;quot;],&amp;quot;experimental&amp;quot;:true}&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;p&gt;配置完后出现&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;quot;registry-mirrors&amp;quot;:
+  No certs for egistry.docker-cn.com
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;修改https -&amp;gt; http&lt;/p&gt;
+">Docker Desktop for mac 代理</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/"" data-c="
+          &lt;p&gt;K8S 使用了kubeadm搭建&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;ssh node
+mkdir /etc/kubelet.d/
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-YAML&#34;&gt;# Run this[]() command on the node where kubelet is running
+cat &amp;lt;&amp;lt;EOF &amp;gt;/etc/kubelet.d/static-web.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web
+  labels:
+    role: myrole
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;#找到kubelet service的配置文件 /etc/systemd/system/kubelet.service.d/&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;root@worker-0:/etc/systemd/system/kubelet.service.d# systemctl status kubelet
+● kubelet.service - kubelet: The Kubernetes Node Agent
+   Loaded: loaded (/lib/systemd/system/kubelet.service; enabled; vendor preset: enabled)
+  Drop-In: /etc/systemd/system/kubelet.service.d
+           └─10-kubeadm.conf
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;#添加--pod-manifest-path=&lt;the directory&gt; 在最后一行&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt; $KUBELET_EXTRA_ARGS --pod-manifest-path=/etc/kubernetes.d/	
+&lt;/code&gt;&lt;/pre&gt;
+">Static POD in Kubeadm Cluster 配置</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/google-container-registry/"" data-c="
+          &lt;p&gt;Google Container Registry&lt;br&gt;
+To pull images from the Google Container Registry, we used a remote Kubernetes secret from GCR outside of GCP. We were able to do so because none of these images contained customer data. With a proper Kubernetes secret, it’s easy to enable remote pulling of images from GCR outside of GCP:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;   apiVersion: v1
+  data:
+    .dockerconfigjson: BASE64_ENCODED_SERVICE_ACCOUNT_JSON_KEY
+  kind: Secret
+  metadata:
+    name: my-gcr-secret
+    namespace: default
+  type: kubernetes.io/dockerconfigjson
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And then use that secret the deployment manifest:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;   spec:
+        imagePullSecrets:
+        - name: my-gcr-secret&lt;/code&gt;&lt;/pre&gt;
+">Google Container Registry</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/open-distro-for-elasticsearch/"" data-c="
+          &lt;p&gt;运行 Open Distro for Elasticsearch&lt;br&gt;
+&lt;code&gt;docker pull amazon/opendistro-for-elasticsearch:0.7.0&lt;/code&gt;&lt;br&gt;
+&lt;code&gt;docker pull amazon/opendistro-for-elasticsearch-kibana:0.7.0&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;创建目录odfe-docker 保存docker-compose.yaml&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-YAML&#34;&gt;
+version: &#39;3&#39;
+services:
+  odfe-node1:
+    image: amazon/opendistro-for-elasticsearch:0.7.0
+    container_name: odfe-node1
+    environment:
+      - cluster.name=odfe-cluster
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - &amp;quot;ES_JAVA_OPTS=-Xms512m -Xmx512m&amp;quot; # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - odfe-data1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - odfe-net
+  odfe-node2:
+    image: amazon/opendistro-for-elasticsearch:0.7.0
+    container_name: odfe-node2
+    environment:
+      - cluster.name=odfe-cluster
+      - bootstrap.memory_lock=true
+      - &amp;quot;ES_JAVA_OPTS=-Xms512m -Xmx512m&amp;quot;
+      - discovery.zen.ping.unicast.hosts=odfe-node1
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - odfe-data2:/usr/share/elasticsearch/data
+    networks:
+      - odfe-net
+  kibana:
+    image: amazon/opendistro-for-elasticsearch-kibana:0.7.0
+    container_name: odfe-kibana
+    ports:
+      - 5601:5601
+    expose:
+      - &amp;quot;5601&amp;quot;
+    environment:
+      ELASTICSEARCH_URL: https://odfe-node1:9200
+    networks:
+      - odfe-net
+
+volumes:
+  odfe-data1:
+  odfe-data2:
+
+networks:
+  odfe-net:
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;code&gt;docker-compose up&lt;/code&gt;&lt;br&gt;
+check &lt;code&gt;curl -XGET https://localhost:9200 -u admin:admin --insecure&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Kibana access&lt;br&gt;
+&lt;code&gt;http://localhost:5601&lt;/code&gt;&lt;/p&gt;
+">Open Distro for Elasticsearch</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/gcloud-proxy/"" data-c="
+          &lt;p&gt;To start, set the type of proxy you are using and the address and port on which to reach it:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;gcloud config set proxy/type PROXY_TYPE
+gcloud config set proxy/address PROXY_IP_ADDRESS
+gcloud config set proxy/port PROXY_PORT
+...
+gcloud config set proxy/username USERNAME
+gcloud config set proxy/password PASSWORD
+&lt;/code&gt;&lt;/pre&gt;
+">gcloud proxy</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/iterm2-proxy/"" data-c="
+          &lt;p&gt;Iterm2 proxy&lt;br&gt;
+export http_proxy=socks5://127.0.0.1:2080&lt;/p&gt;
+">Iterm2 sockes proxy</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/cka/"" data-c="
+          &lt;p&gt;https://medium.com/@pmvk/tips-to-crack-certified-kubernetes-administrator-cka-exam-c949c7a9bea1&lt;br&gt;
+https://github.com/arush-sal/cka-practice-environment&lt;/p&gt;
+&lt;p&gt;https://blog.csdn.net/deerjoe/article/details/86300826&lt;br&gt;
+https://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93/&lt;br&gt;
+https://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93-2/&lt;br&gt;
+https://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93-3/&lt;/p&gt;
+&lt;p&gt;材料：&lt;br&gt;
+https://jimmysong.io/kubernetes-handbook/&lt;/p&gt;
+&lt;p&gt;Pod Affinity(亲和性)？&lt;br&gt;
+配置访问cluster&lt;br&gt;
+证书&lt;br&gt;
+Other:&lt;br&gt;
+https://docs.google.com/spreadsheets/d/10NltoF_6y3mBwUzQ4bcQLQfCE1BWSgUDcJXy-Qp2JEU/edit?usp=sharing&lt;/p&gt;
+">CKA</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/kubeadm-init-coredns-pending/"" data-c="
+          &lt;p&gt;CoreDNS&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$kubectl get pods --all-namespaces
+NAMESPACE     NAME                                              READY   STATUS              RESTARTS   AGE
+kube-system   pod/coredns-576cbf47c7-6qbtq                      0/1     Pending
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;systemctl status kubelet
+journalctl -xeu kubelet
+
+Jul 29 02:25:50 controller-0 kubelet[8594]: W0729 02:25:50.685951    8594 cni.go:213] Unable to update cni config: No networks found in /etc/cni/net.d
+Jul 29 02:25:51 controller-0 kubelet[8594]: E0729 02:25:51.343631    8594 kubelet.go:2169] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;missing loopback binary of CNI at &lt;code&gt;/opt/cni/bin&lt;/code&gt;, a CNI plugin must be installed,You must install a pod network add-on so that your pods can communicate with each other.&lt;br&gt;
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/&lt;/p&gt;
+">Kubeadm init - CoreDNS Pending </a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/efk/"" data-c="
+          &lt;p&gt;https://www.qikqiak.com/post/install-efk-stack-on-k8s/&lt;/p&gt;
+">EFK</a>
+      </div>
+      
+      <div class="item">
+        <a class="result-title" href="https://sendme365.github.io/post/gcp-presistent-disks-check/"" data-c="
+          &lt;p&gt;用于查看GCP 上 Disk 那些是un-use&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;gcloud compute disks list --format=&amp;quot;json&amp;quot; | jq -c &#39;.[] | {creationTimestamp: .creationTimestamp, name: .name, sizeGb: .sizeGb, status: .status, users: .users} &#39;
+
+{&amp;quot;creationTimestamp&amp;quot;:&amp;quot;2019-04-03T04:11:59.666-07:00&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;xxxx-159571ec-pvc-4c5c970c-5601-11e9-9790-4201ac100006&amp;quot;,&amp;quot;sizeGb&amp;quot;:&amp;quot;100&amp;quot;,&amp;quot;status&amp;quot;:&amp;quot;READY&amp;quot;,&amp;quot;users&amp;quot;:[&amp;quot;https://www.googleapis.com/compute/v1/projects/xxx/zones/xxxxx/instances/xxx-int-2-1ce606b2-2m8j&amp;quot;]}
+{&amp;quot;creationTimestamp&amp;quot;:&amp;quot;2019-06-23T18:22:50.073-07:00&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;xxx-2-1ce606b2-2m8j&amp;quot;,&amp;quot;sizeGb&amp;quot;:&amp;quot;20&amp;quot;,&amp;quot;status&amp;quot;:&amp;quot;READY&amp;quot;,&amp;quot;users&amp;quot;:[&amp;quot;https://www.googleapis.com/compute/v1/projects/xxx/zones/xxx/instances/xxx-int-2-1ce606b2-2m8j&amp;quot;]}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://sendme365.github.io//post-images/1561721941528.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;unknow:&lt;br&gt;
+想在output时获取users最后一个xxx-int-2-1ce606b2-2m8j值。 可能string slice ？&lt;/p&gt;
+">GCP Presistent Disks Check</a>
+      </div>
+      
+    </div>
+  </div>
+</div>
+<script>
+  // var escape = "[{&#34;content&#34;:&#34;&lt;p&gt;address=/freehao123.com/123.123.123.123&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;dnsmasq&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;dnsmasq&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-11-23 21:31:35&#34;,&#34;dateFormat&#34;:&#34;2019-11-23&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/dnsmasq/&#34;,&#34;hideInList&#34;:true,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:2000,&#34;words&#34;:7,&#34;minutes&#34;:1},&#34;description&#34;:&#34;address=/freehao123.com/123.123.123.123\n&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;GCP VPS IP：aa.aa.aa.aa&lt;br&gt;\nNAS IP：bb.bb.bb.bb&lt;/p&gt;\n&lt;p&gt;github: &lt;code&gt;https://github.com/fatedier/frp&lt;/code&gt;&lt;br&gt;\ndownload: &lt;code&gt;wget https://github.com/fatedier/frp/releases/download/v0.29.1/frp_0.29.1_linux_amd64.tar.gz&lt;/code&gt;&lt;/p&gt;\n&lt;h1 id=\&#34;vps\&#34;&gt;VPS:&lt;/h1&gt;\n&lt;h2 id=\&#34;设置frp服务\&#34;&gt;设置frp服务&lt;/h2&gt;\n&lt;p&gt;切换到root &lt;code&gt;sudo su -&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;cp frps.service /usr/lib/systemd/system&lt;/code&gt;&lt;br&gt;\n注释掉#User=nobody&lt;/p&gt;\n&lt;h2 id=\&#34;frpsini\&#34;&gt;frps.ini&lt;/h2&gt;\n&lt;pre&gt;&lt;code&gt;[common]\nbind_port = 7000\nvhost_http_port = 80\nvhost_https_port = 443\ntoken = 23123432132  #token 随机生成 或者不使用都可以\n&lt;/code&gt;&lt;/pre&gt;\n&lt;h2 id=\&#34;复制文件\&#34;&gt;复制文件&lt;/h2&gt;\n&lt;p&gt;&lt;code&gt;cp frps /usr/bin/frps&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;cp frps.ini /etc/frp/frps.ini&lt;/code&gt;&lt;/p&gt;\n&lt;h2 id=\&#34;设置开机自启动\&#34;&gt;设置开机自启动&lt;/h2&gt;\n&lt;p&gt;&lt;code&gt;systemctl enable frps&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;systemctl restart frps&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;systemctl statu frps&lt;/code&gt;&lt;/p&gt;\n&lt;h2 id=\&#34;开启本地防火墙\&#34;&gt;开启本地防火墙&lt;/h2&gt;\n&lt;pre&gt;&lt;code&gt;iptables -I INPUT -p tcp --dport 7000 -j ACCEPT #用于frp\niptables -I INPUT -p tcp --dport 6000 -j ACCEPT #用于ssh\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;运行后添加到启动项中使开机生效&lt;br&gt;\n&lt;code&gt;vi /etc/rc.local&lt;/code&gt;&lt;/p&gt;\n&lt;p&gt;GCP console firewall 添加 range 0.0.0.0/0 and tcp 7000，6000 端口 允许&lt;/p&gt;\n&lt;hr&gt;\n&lt;h1 id=\&#34;nas\&#34;&gt;NAS:&lt;/h1&gt;\n&lt;p&gt;download: &lt;code&gt;wget https://github.com/fatedier/frp/releases/download/v0.29.1/frp_0.29.1_linux_amd64.tar.gz&lt;/code&gt;&lt;br&gt;\n切换到root &lt;code&gt;sudo su -&lt;/code&gt;&lt;/p&gt;\n&lt;h2 id=\&#34;frpcini\&#34;&gt;frpc.ini&lt;/h2&gt;\n&lt;pre&gt;&lt;code&gt;[common]\nserver_addr = aa.aa.aa.aa\nserver_port = 7000\ntoken = 23123432132 #token 随机生成 或者不使用都可以，但需要和frps中匹配\n\n[ssh]\ntype = tcp\nlocal_ip = 127.0.0.1\nlocal_port = 22\nremote_port = 6000  #跳转端口 需要开通GCP VPN本地系统防火墙和GCP防火墙\n\n[dsm]\ntype = http\nlocal_ip = 127.0.0.1\nlocal_port = 5000\ncustom_domains = dsm.aa.com  #如有域名，添加\n\n[photo]\ntype = tcp\nlocal_ip = 127.0.0.1\nlocal_port = 443\nremote_port = 8000\ncustom_domains = photo.aa.com\n&lt;/code&gt;&lt;/pre&gt;\n&lt;h2 id=\&#34;复制文件-2\&#34;&gt;复制文件&lt;/h2&gt;\n&lt;p&gt;&lt;code&gt;cp frps /usr/bin/frpc&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;cp frps.ini /etc/frp/frpc.ini&lt;/code&gt;&lt;/p&gt;\n&lt;h2 id=\&#34;启动frpc\&#34;&gt;启动frpc&lt;/h2&gt;\n&lt;p&gt;&lt;code&gt;nohup /usr/bin/frpc -c /root/frp/frpc.ini &amp;amp;&lt;/code&gt;&lt;/p&gt;\n&lt;h2 id=\&#34;设置开机自启动-2\&#34;&gt;设置开机自启动&lt;/h2&gt;\n&lt;p&gt;DSM -&amp;gt; 控制面板 -&amp;gt; 计划任务 -&amp;gt; 新增 -&amp;gt; 触法任务 -&amp;gt; 任务设置 &lt;code&gt;bash nohup /usr/bin/frpc -c /root/frp/frpc.ini &amp;amp;&lt;/code&gt;&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;frp-qun-hui-nei-wang-chuan-tou&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Frp 群晖 内网穿透&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-11-14 08:55:08&#34;,&#34;dateFormat&#34;:&#34;2019-11-14&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/frp-qun-hui-nei-wang-chuan-tou/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;2 min read&#34;,&#34;time&#34;:118000,&#34;words&#34;:382,&#34;minutes&#34;:2},&#34;description&#34;:&#34;GCP VPS IP：aa.aa.aa.aa\nNAS IP：bb.bb.bb.bb\ngithub: https://github.com/fatedier/frp\ndownload: wget https://github.com/fate...&#34;,&#34;toc&#34;:&#34;&lt;ul class=\&#34;markdownIt-TOC\&#34;&gt;\n&lt;li&gt;&lt;a href=\&#34;#vps\&#34;&gt;VPS:&lt;/a&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E8%AE%BE%E7%BD%AEfrp%E6%9C%8D%E5%8A%A1\&#34;&gt;设置frp服务&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#frpsini\&#34;&gt;frps.ini&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6\&#34;&gt;复制文件&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E8%AE%BE%E7%BD%AE%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF%E5%8A%A8\&#34;&gt;设置开机自启动&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E5%BC%80%E5%90%AF%E6%9C%AC%E5%9C%B0%E9%98%B2%E7%81%AB%E5%A2%99\&#34;&gt;开启本地防火墙&lt;/a&gt;&lt;/li&gt;\n&lt;/ul&gt;\n&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#nas\&#34;&gt;NAS:&lt;/a&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;a href=\&#34;#frpcini\&#34;&gt;frpc.ini&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6-2\&#34;&gt;复制文件&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E5%90%AF%E5%8A%A8frpc\&#34;&gt;启动frpc&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E8%AE%BE%E7%BD%AE%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF%E5%8A%A8-2\&#34;&gt;设置开机自启动&lt;/a&gt;&lt;/li&gt;\n&lt;/ul&gt;\n&lt;/li&gt;\n&lt;/ul&gt;\n&#34;},{&#34;content&#34;:&#34;&lt;p&gt;泛域名： &lt;code&gt;*.zeromonster.com&lt;/code&gt;&lt;br&gt;\n域名提供商： &lt;code&gt;namesilo&lt;/code&gt;&lt;br&gt;\nLet&#39;s Encrypt： 提供免费证书。&lt;/p&gt;\n&lt;p&gt;因为需要验证域名所有权。所以需要通过namesilo的DNS API做交换验证。其它域名商DNS API 可以通过这里查看 &lt;code&gt;https://github.com/Neilpang/acme.sh/wiki/dnsapi&lt;/code&gt;&lt;/p&gt;\n&lt;p&gt;namesilo DNS API key： &lt;code&gt;https://www.namesilo.com/account/api-manager&lt;/code&gt;&lt;/p&gt;\n&lt;p&gt;下载安装acme 工具用于申请证书 &lt;code&gt;curl https://get.acme.sh | sh&lt;/code&gt;&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-bash\&#34;&gt;[Tue Nov 12 13:49:08 CST 2019] Installing from online archive.\n[Tue Nov 12 13:49:08 CST 2019] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gz\n[Tue Nov 12 13:49:11 CST 2019] Extracting master.tar.gz\n[Tue Nov 12 13:49:12 CST 2019] It is recommended to install socat first.\n[Tue Nov 12 13:49:12 CST 2019] We use socat for standalone server if you use standalone mode.\n[Tue Nov 12 13:49:12 CST 2019] If you don&#39;t use standalone mode, just ignore this warning.\n[Tue Nov 12 13:49:12 CST 2019] Installing to /Users/i333878/.acme.sh\n[Tue Nov 12 13:49:12 CST 2019] Installed to /Users/i333878/.acme.sh/acme.sh\n[Tue Nov 12 13:49:12 CST 2019] Installing alias to &#39;/Users/i333878/.zshrc&#39;\n[Tue Nov 12 13:49:12 CST 2019] OK, Close and reopen your terminal to start using acme.sh\n[Tue Nov 12 13:49:12 CST 2019] Installing cron job\ncrontab: no crontab for i333878\ncrontab: no crontab for i333878\n[Tue Nov 12 13:49:16 CST 2019] Good, bash is found, so change the shebang to use bash as preferred.\n[Tue Nov 12 13:49:17 CST 2019] OK\n[Tue Nov 12 13:49:17 CST 2019] Install success!\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;打开新窗口或者&lt;code&gt;source ~/.zshrc&lt;/code&gt; 重现载入设置。 确保acme.sh -h工作&lt;/p&gt;\n&lt;p&gt;设置环境变量：&lt;code&gt;export Namesilo_Key=59f81exxxxxxxxxxxx&lt;/code&gt;&lt;br&gt;\n生成证书：&lt;code&gt;acme.sh --issue --dns dns_namesilo --dnssleep 900 -d zeromonster.com -d &#39;*.zeromonster.com&#39;&lt;/code&gt;&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-bash\&#34;&gt;[Tue Nov 12 14:16:08 CST 2019] Empty record id, it seems no such record.\n[Tue Nov 12 14:16:08 CST 2019] Removed: Success\n[Tue Nov 12 14:16:08 CST 2019] Verify finished, start to sign.\n[Tue Nov 12 14:16:08 CST 2019] Lets finalize the order, Le_OrderFinalize: https://acme-v02.api.letsencrypt.org/acme/finalize/71596892/1493372364\n[Tue Nov 12 14:16:09 CST 2019] Download cert, Le_LinkCert: https://acme-v02.api.letsencrypt.org/acme/cert/04552405240b5b4451e67864a7df3eabddaf\n[Tue Nov 12 14:16:10 CST 2019] Cert success.\n-----BEGIN CERTIFICATE-----\nMIIFaTCCBFGgAwIBAgISBFUkBSQLW0RR5nhkp98+q92vMA0GCSqGSIb3DQEBCwUA\n...\nZMpV9tycrwyrBktorlYXSOjWBzmCslAnuJIQuc1Sxq2U41HajkpSr767KKU5\n-----END CERTIFICATE-----\n[Tue Nov 12 14:16:10 CST 2019] Your cert is in  /Users/.acme.sh/zeromonster.com/zeromonster.com.cer\n[Tue Nov 12 14:16:10 CST 2019] Your cert key is in  /Users/.acme.sh/zeromonster.com/zeromonster.com.key\n[Tue Nov 12 14:16:10 CST 2019] The intermediate CA cert is in  /Users/.acme.sh/zeromonster.com/ca.cer\n[Tue Nov 12 14:16:10 CST 2019] And the full chain certs is there:  /Users/.acme.sh/zeromonster.com/fullchain.cer\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;其中证书文件 fullchain.cer 密钥文件 zeromonster.com.key 以后在使用别人服务时要填写SSL证书内容就是这两个。&lt;/p&gt;\n&lt;p&gt;证书过期&lt;br&gt;\nLet&#39;s Encrypt 证书的有效期是三个月。但我们通过脚本acme.sh启动就不用担心，因为它写入了定时命令。用 crontab -l&lt;br&gt;\n&lt;code&gt;acme.sh --cron --home &amp;quot;/Users/.acme.sh/&amp;quot; &amp;gt; /dev/null&lt;/code&gt;&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;fan-yu-ming-zheng-shu&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;泛域名证书&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-11-12 13:37:29&#34;,&#34;dateFormat&#34;:&#34;2019-11-12&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/fan-yu-ming-zheng-shu/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;4 min read&#34;,&#34;time&#34;:213000,&#34;words&#34;:645,&#34;minutes&#34;:4},&#34;description&#34;:&#34;泛域名： *.zeromonster.com\n域名提供商： namesilo\nLet&#39;s Encrypt： 提供免费证书。\n因为需要验证域名所有权。所以需要通过namesilo的DNS API做交换验证。其它域名商DNS API 可以通过这...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;GOOGLE_CLOUD_PROJECT=xxxxxxxxx&lt;br&gt;\nstorage =vault-storage-ted&lt;br&gt;\n--zone asia-east1&lt;/p&gt;\n&lt;ol&gt;\n&lt;li&gt;Create Storage&lt;br&gt;\n&lt;code&gt;gsutil mb &amp;quot;gs://${GOOGLE_CLOUD_PROJECT}-vault-storage&amp;quot;&lt;/code&gt;&lt;/li&gt;\n&lt;li&gt;Create KMS&lt;/li&gt;\n&lt;/ol&gt;\n&lt;pre&gt;&lt;code&gt;# enable KMS API\n    gcloud services enable \\\n    cloudapis.googleapis.com \\\n    cloudkms.googleapis.com \\\n    cloudresourcemanager.googleapis.com \\\n    cloudshell.googleapis.com \\\n    container.googleapis.com \\\n    containerregistry.googleapis.com \\\n    iam.googleapis.com\n    \n# create keyrings and keys\ngcloud kms keyrings create vault --location asia-east1\n\ngcloud kms keys create vault-init \\\n    --location asia-east1 \\\n    --keyring vault \\\n    --purpose encryption\n&lt;/code&gt;&lt;/pre&gt;\n&lt;ol start=\&#34;3\&#34;&gt;\n&lt;li&gt;Create GCP Service Account&lt;/li&gt;\n&lt;/ol&gt;\n&lt;pre&gt;&lt;code&gt;    export SERVICE_ACCOUNT=&amp;quot;vault-server@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com&amp;quot;\n    gcloud iam service-accounts create vault-server \\\n    --display-name &amp;quot;vault service account&amp;quot;\n&lt;/code&gt;&lt;/pre&gt;\n&#34;,&#34;fileName&#34;:&#34;vault-in-gke&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Vault in GKE&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-11-07 13:40:03&#34;,&#34;dateFormat&#34;:&#34;2019-11-07&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/vault-in-gke/&#34;,&#34;hideInList&#34;:true,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:37000,&#34;words&#34;:101,&#34;minutes&#34;:1},&#34;description&#34;:&#34;GOOGLE_CLOUD_PROJECT=xxxxxxxxx\nstorage =vault-storage-ted\n--zone asia-east1\n\nCreate Storage\ngsutil mb &amp;quot;gs://${GOOGL...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;ol&gt;\n&lt;li&gt;Create a pod with a Liveness and Readiness probes&lt;/li&gt;\n&lt;/ol&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-yaml\&#34;&gt;apiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    test: liveness\n  name: liveness-exec\nspec:\n  containers:\n  - name: liveness\n    image: k8s.gcr.io/busybox\n    args:\n    - /bin/sh\n    - -c\n    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600\n    livenessProbe:\n      exec:\n        command:\n        - cat\n        - /tmp/healthy\n      initialDelaySeconds: 5\n      periodSeconds: 5\n\t\treadinessProbe:\n\t\t\texec:\n\t\t\t\tcommand:\n\t\t\t\t- cat\n\t\t\t\t- /tmp/healthy\n\t\t\tinitialDelaySeconds: 5\n\t\t\tperiodSeconds: 5\n&lt;/code&gt;&lt;/pre&gt;\n&lt;hr&gt;\n&lt;ol start=\&#34;2\&#34;&gt;\n&lt;li&gt;Create a daemon set - Create a daemon set and change the update strategy to do a rolling update with a delay of 30 seconds between each update.&lt;br&gt;\nhttps://kubernetes.io/docs/concepts/workloads/controllers/daemonset/&lt;br&gt;\nStep 1: Checking DaemonSet RollingUpdate update strategy&lt;br&gt;\n&lt;code&gt;kubectl get ds/&amp;lt;daemonset-name&amp;gt; -o go-template=&#39;{{.spec.updateStrategy.type}}{{&amp;quot;\\n&amp;quot;}}&#39;&lt;/code&gt;&lt;br&gt;\nThe output from both commands should be:&lt;br&gt;\n&lt;code&gt;RollingUpdate&lt;/code&gt;&lt;br&gt;\nStep 2: Creating a DaemonSet with RollingUpdate update strategy&lt;br&gt;\n&lt;code&gt;kubectl apply -f ds-v2.yaml&lt;/code&gt;&lt;br&gt;\nStep 3: Updating a DaemonSet template&lt;br&gt;\n&lt;code&gt;kubectl edit ds/&amp;lt;daemonset-name&amp;gt;&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;kubectl patch ds/&amp;lt;daemonset-name&amp;gt; -p=&amp;lt;strategic-merge-patch&amp;gt;&lt;/code&gt;&lt;br&gt;\nUpdating only the container image&lt;br&gt;\n&lt;code&gt;kubectl set image ds/&amp;lt;daemonset-name&amp;gt; &amp;lt;container-name&amp;gt;=&amp;lt;container-new-image&amp;gt;&lt;/code&gt;&lt;br&gt;\nStep 4: Watching the rolling update status&lt;br&gt;\n&lt;code&gt;kubectl rollout status ds/&amp;lt;daemonset-name&amp;gt;&lt;/code&gt;&lt;br&gt;\nThe output&lt;br&gt;\n&lt;code&gt;daemonset &amp;quot;&amp;lt;daemonset-name&amp;gt;&amp;quot; successfully rolled out&lt;/code&gt;&lt;/li&gt;\n&lt;/ol&gt;\n&lt;hr&gt;\n&lt;pre&gt;&lt;code&gt;\t3） 日志文件挂载到主机目录:  \n&lt;/code&gt;&lt;/pre&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-yaml\&#34;&gt;apiVersion: v1\nkind: Pod\nmetadata:\n\tname: test-pd \nspec:\n\tcontainers:\n\t- image: gcr.io/google_containers/test-webserver\n\t  name: test-container\n\tvolumeMounts:\n\t- mountPath: /log\n\t  name: log-volume \n\tvolumes:\n\t- name: log-volume \n\t  hostPath:\n\t# directory location on host \n\t\tpath: /var/k8s/log\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;4）&lt;br&gt;\nkubectl run {deployment} --image={image} --replicas={rep.}&lt;br&gt;\nkubectl set image dployment/nginx-deployment nginx=nginx:1.91&lt;br&gt;\nkubectl set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=512mi&lt;br&gt;\n#升级策略&lt;br&gt;\nminReadySeconds: 5&lt;br&gt;\nstrategy:&lt;br&gt;\ntype: RollingUpdate&lt;br&gt;\nrollingUpdate:&lt;br&gt;\nmaxSurge: 1 #默认25%&lt;br&gt;\nmaxUnavailable: 1 #默认25%&lt;/p&gt;\n&lt;p&gt;5#&lt;/p&gt;\n&lt;h1 id=\&#34;暂停deployment\&#34;&gt;暂停Deployment:&lt;/h1&gt;\n&lt;p&gt;$ kubectl rollout pause deployment/nginx-deployment&lt;/p&gt;\n&lt;h1 id=\&#34;恢复deployment\&#34;&gt;恢复Deployment:&lt;/h1&gt;\n&lt;p&gt;$ kubectl rollout resume deployment/nginx-deployment&lt;/p&gt;\n&lt;h1 id=\&#34;查询升级状态\&#34;&gt;查询升级状态:&lt;/h1&gt;\n&lt;p&gt;$ kubectl rollout status deployment/nginx-deployment&lt;/p&gt;\n&lt;h1 id=\&#34;查询升级历史\&#34;&gt;查询升级历史:&lt;/h1&gt;\n&lt;p&gt;$ kubectl rollout history deploy/nginx-deployment&lt;br&gt;\n$ kubectl rollout history deploy/nginx-deployment --revision=2&lt;/p&gt;\n&lt;h1 id=\&#34;回滚\&#34;&gt;回滚:&lt;/h1&gt;\n&lt;p&gt;$ kubectl rollout undo deployment/nginx-deployment --to-revision=2&lt;/p&gt;\n&lt;p&gt;6#&lt;br&gt;\nkubectl scale deployment nginx-deployment --replicas=10&lt;/p&gt;\n&lt;p&gt;#7 **** 下载 nsloop 镜像&lt;br&gt;\nwget https://kubernetes.io/examples/admin/dns.yaml&lt;br&gt;\n--nslookup kubernetes.default&lt;/p&gt;\n&lt;p&gt;#8 生成kueconfig 文件&lt;br&gt;\n修改cluster&lt;br&gt;\nkubectl config set-cluster kubernetes&lt;br&gt;\n--certificate-authority=/path/to/ca --embed-certs=true --server=${KUBE_APISERVER} --kubeconfig=/kubeconfig/filename&lt;br&gt;\n• 修改user&lt;br&gt;\nkubectl config set-credentials testuser&lt;br&gt;\n--client-certificate=/path/to/cert --client-key=/path/to/private_key --embed-certs=true --kubeconfig=/kubeconfig/filename&lt;br&gt;\n• 修改context&lt;br&gt;\nkubectl config set-context default&lt;br&gt;\n--cluster=kubernetes --user=testuser --kubeconfig=test.kubeconfig&lt;br&gt;\n• 设置默认context&lt;br&gt;\nkubectl config use-context default --kubeconfig=/kubeconfig/filename&lt;/p&gt;\n&lt;p&gt;#8 驱逐Node 上POD&lt;br&gt;\nkubectl drain node_name --ignore-daemonsets=true&lt;br&gt;\nkubectl uncordon node_name =&amp;gt; 恢复Node&lt;/p&gt;\n&lt;p&gt;7#&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-yaml\&#34;&gt;apiVersion: v1\nkind: Pod\nmetadata:\n  name: ubuntu-aff\n  labels:\n    os: centos\nspec:\n  affinity:\n    nodeAffinity:\n      requiredDuringSchedulingIgnoredDuringExecution:   #第一条件\n        nodeSelectorTerms:\n        - matchExpressions:\n          - key: beta.kubernetes.io/arch\n            operator: In\n            values:\n            - amd64\n      preferredDuringSchedulingIgnoredDuringExecution:  #第二个条件\n      - weight: 1\n        preference:\n          matchExpressions:\n          - key: disktype\n            operator: In\n            values:\n            - hdd\n  containers:\n  - name: ubuntu-aff\n    image: 10.3.1.15:5000/ubuntu:16.04\n    env:  #在容器内配置环境变量\n    - name: Test\n      value: &amp;quot;7890&amp;quot;\n    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]\n    \n----\nkubernetes内置标签：\n\n    ○ kubernetes.io/hostname\n\n    ○ failure-domain.beta.kubernetes.io/zone\n\n    ○ failure-domain.beta.kubernetes.io/region\n\n    ○ beta.kubernetes.io/instance-type\n\n    ○ beta.kubernetes.io/os\n\n    ○ beta.kubernetes.io/arch\n\n---\n#pod affinity的参照Pod\napiVersion: v1\nkind: Pod\nmetadata:\n  name: pod-flag\n  labels:    # 定义多个标签，以便其它pod设置亲和与互斥\n    app: nginx\n    security: s1\nspec:\n  containers:\n  - name: nginx-1-10\n    image: 10.3.1.15:5000/nginx:1.10\n    ports:\n    - containerPort: 80\n---\n#创建一个pod，与参照的pod必须要在同一个node上，即，具有亲和性。\napiVersion: v1\nkind: Pod\nmetadata:\n  name: with-pod-affinity\n  labels:\n    os: ubuntu\nspec:\n  affinity: #亲和性设置\n    podAffinity:  #设置pod亲和性\n      requiredDuringSchedulingIgnoredDuringExecution: #必须要满足的条件\n      - labelSelector:  #与哪个pod有亲和性，在此设置此pod具有的标签\n          matchExpressions:  #要匹配的pod的，标签定义，如果定义了多个matchExpressions，则所有标签必须同时满足。\n          - key: security #标签的key\n            operator: In  #操作符\n            values:\n            - s1  #标签的值，即拥有label security=s1\n        topologyKey: kubernetes.io/hostname #节点所属拓朴域\n  #上面表达的意思是此处创建的Pod必须要与拥有标签security=s1的pod在同一Node上.\n  containers:\n  - name: wish-pod-affinity\n    image: 10.3.1.15:5000/ubuntu:16.04\n    env: \n    - name: Test\n      value: &amp;quot;7890&amp;quot;\n    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]\n    \n \n   # 因为pod是属于某个命名空间的，所以设置符合条件的目标Pod时，还可以指定哪个命名空间或全部命名空间里的Pod，\n   #  namespace的定义与labelSelector同级，如果不指定命名空间，则与此处创建的pod在一个namespace之中\n---\n#创建一个pod，与参照的pod，一定不能在同一个Node上，即具有互斥性\napiVersion: v1\nkind: Pod\nmetadata:\n  name: with-pod-antiffinity\n  labels:\n    os: ubuntu\nspec:\n  affinity: #亲和性设置\n   podAntiAffinity:  #设置pod反亲和性\n      requiredDuringSchedulingIgnoredDuringExecution: #必须要满足的条件\n      - labelSelector:  #与哪个pod有反亲和性，互斥性，在此设置此pod具有的标签\n          matchExpressions:\n          - key: app #标签的key\n            operator: In\n            values:\n            - nginx  #标签的值，即拥有label app=nginx\n        topologyKey: kubernetes.io/hostname  #节点所属拓朴域\n  #上面表达的意思是此处创建的Pod必须要与拥有标签app=nginx的pod不在在同一个Node上.如果所有 Node将无法满足条件，则创建的pod一直处于Pending状态。\n  containers:\n  - name: wish-pod-antiaffinity\n    image: 10.3.1.15:5000/ubuntu:16.04\n    env: \n    - name: Test\n      value: &amp;quot;7890&amp;quot;\n    command: [&amp;quot;bash&amp;quot;,&amp;quot;-c&amp;quot;,&amp;quot;while true;do date;sleep 1;done&amp;quot;]\n&lt;/code&gt;&lt;/pre&gt;\n&#34;,&#34;fileName&#34;:&#34;ccka&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;CKA&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-09-02 14:34:05&#34;,&#34;dateFormat&#34;:&#34;2019-09-02&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/ccka/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;7 min read&#34;,&#34;time&#34;:366000,&#34;words&#34;:1179,&#34;minutes&#34;:7},&#34;description&#34;:&#34;\nCreate a pod with a Liveness and Readiness probes\n\napiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    test: liveness\n  na...&#34;,&#34;toc&#34;:&#34;&lt;ul class=\&#34;markdownIt-TOC\&#34;&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E6%9A%82%E5%81%9Cdeployment\&#34;&gt;暂停Deployment:&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E6%81%A2%E5%A4%8Ddeployment\&#34;&gt;恢复Deployment:&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E6%9F%A5%E8%AF%A2%E5%8D%87%E7%BA%A7%E7%8A%B6%E6%80%81\&#34;&gt;查询升级状态:&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E6%9F%A5%E8%AF%A2%E5%8D%87%E7%BA%A7%E5%8E%86%E5%8F%B2\&#34;&gt;查询升级历史:&lt;/a&gt;&lt;/li&gt;\n&lt;li&gt;&lt;a href=\&#34;#%E5%9B%9E%E6%BB%9A\&#34;&gt;回滚:&lt;/a&gt;&lt;/li&gt;\n&lt;/ul&gt;\n&#34;},{&#34;content&#34;:&#34;&lt;!-- more --&gt;\n&lt;p&gt;配置Daemon&lt;br&gt;\n{&amp;quot;debug&amp;quot;:true,&amp;quot;registry-mirrors&amp;quot;:[&amp;quot;https://docker.mirrors.ustc.edu.cn&amp;quot;],&amp;quot;experimental&amp;quot;:true}&lt;/p&gt;\n&lt;!-- more --&gt;\n&lt;p&gt;配置完后出现&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt;&amp;quot;registry-mirrors&amp;quot;:\n  No certs for egistry.docker-cn.com\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;修改https -&amp;gt; http&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;docker-desktop-for-mac-dai-li&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Docker Desktop for mac 代理&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-08-29 07:56:14&#34;,&#34;dateFormat&#34;:&#34;2019-08-29&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:15000,&#34;words&#34;:45,&#34;minutes&#34;:1},&#34;description&#34;:&#34;\n配置Daemon\n{&amp;quot;debug&amp;quot;:true,&amp;quot;registry-mirrors&amp;quot;:[&amp;quot;https://docker.mirrors.ustc.edu.cn&amp;quot;],&amp;quot;ex...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;K8S 使用了kubeadm搭建&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-shell\&#34;&gt;ssh node\nmkdir /etc/kubelet.d/\n&lt;/code&gt;&lt;/pre&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-YAML\&#34;&gt;# Run this[]() command on the node where kubelet is running\ncat &amp;lt;&amp;lt;EOF &amp;gt;/etc/kubelet.d/static-web.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: static-web\n  labels:\n    role: myrole\nspec:\n  containers:\n    - name: web\n      image: nginx\n      ports:\n        - name: web\n          containerPort: 80\n          protocol: TCP\nEOF\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;#找到kubelet service的配置文件 /etc/systemd/system/kubelet.service.d/&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-shell\&#34;&gt;root@worker-0:/etc/systemd/system/kubelet.service.d# systemctl status kubelet\n● kubelet.service - kubelet: The Kubernetes Node Agent\n   Loaded: loaded (/lib/systemd/system/kubelet.service; enabled; vendor preset: enabled)\n  Drop-In: /etc/systemd/system/kubelet.service.d\n           └─10-kubeadm.conf\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;#添加--pod-manifest-path=&lt;the directory&gt; 在最后一行&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt; $KUBELET_EXTRA_ARGS --pod-manifest-path=/etc/kubernetes.d/\t\n&lt;/code&gt;&lt;/pre&gt;\n&#34;,&#34;fileName&#34;:&#34;static-pod-in-kubeadm-cluster&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Static POD in Kubeadm Cluster 配置&#34;,&#34;tags&#34;:[{&#34;name&#34;:&#34;K8S&#34;,&#34;slug&#34;:&#34;k8s&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/k8s/&#34;}],&#34;date&#34;:&#34;2019-08-16 10:40:39&#34;,&#34;dateFormat&#34;:&#34;2019-08-16&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:46000,&#34;words&#34;:132,&#34;minutes&#34;:1},&#34;description&#34;:&#34;K8S 使用了kubeadm搭建\nssh node\nmkdir /etc/kubelet.d/\n\n# Run this[]() command on the node where kubelet is running\ncat &amp;lt;&amp;lt...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;Google Container Registry&lt;br&gt;\nTo pull images from the Google Container Registry, we used a remote Kubernetes secret from GCR outside of GCP. We were able to do so because none of these images contained customer data. With a proper Kubernetes secret, it’s easy to enable remote pulling of images from GCR outside of GCP:&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt;   apiVersion: v1\n  data:\n    .dockerconfigjson: BASE64_ENCODED_SERVICE_ACCOUNT_JSON_KEY\n  kind: Secret\n  metadata:\n    name: my-gcr-secret\n    namespace: default\n  type: kubernetes.io/dockerconfigjson\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;And then use that secret the deployment manifest:&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt;   spec:\n        imagePullSecrets:\n        - name: my-gcr-secret&lt;/code&gt;&lt;/pre&gt;\n&#34;,&#34;fileName&#34;:&#34;google-container-registry&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Google Container Registry&#34;,&#34;tags&#34;:[{&#34;name&#34;:&#34;GKE&#34;,&#34;slug&#34;:&#34;gke&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/gke/&#34;},{&#34;name&#34;:&#34;k8s&#34;,&#34;slug&#34;:&#34;k8s&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/k8s/&#34;},{&#34;index&#34;:-1,&#34;name&#34;:&#34;GCP&#34;,&#34;slug&#34;:&#34;Ioi2TlpIY&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/Ioi2TlpIY/&#34;}],&#34;date&#34;:&#34;2019-08-13 09:40:19&#34;,&#34;dateFormat&#34;:&#34;2019-08-13&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/google-container-registry/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:32000,&#34;words&#34;:87,&#34;minutes&#34;:1},&#34;description&#34;:&#34;Google Container Registry\nTo pull images from the Google Container Registry, we used a remote Kubernetes secret from GCR...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;运行 Open Distro for Elasticsearch&lt;br&gt;\n&lt;code&gt;docker pull amazon/opendistro-for-elasticsearch:0.7.0&lt;/code&gt;&lt;br&gt;\n&lt;code&gt;docker pull amazon/opendistro-for-elasticsearch-kibana:0.7.0&lt;/code&gt;&lt;/p&gt;\n&lt;p&gt;创建目录odfe-docker 保存docker-compose.yaml&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-YAML\&#34;&gt;\nversion: &#39;3&#39;\nservices:\n  odfe-node1:\n    image: amazon/opendistro-for-elasticsearch:0.7.0\n    container_name: odfe-node1\n    environment:\n      - cluster.name=odfe-cluster\n      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping\n      - &amp;quot;ES_JAVA_OPTS=-Xms512m -Xmx512m&amp;quot; # minimum and maximum Java heap size, recommend setting both to 50% of system RAM\n    ulimits:\n      memlock:\n        soft: -1\n        hard: -1\n    volumes:\n      - odfe-data1:/usr/share/elasticsearch/data\n    ports:\n      - 9200:9200\n      - 9600:9600 # required for Performance Analyzer\n    networks:\n      - odfe-net\n  odfe-node2:\n    image: amazon/opendistro-for-elasticsearch:0.7.0\n    container_name: odfe-node2\n    environment:\n      - cluster.name=odfe-cluster\n      - bootstrap.memory_lock=true\n      - &amp;quot;ES_JAVA_OPTS=-Xms512m -Xmx512m&amp;quot;\n      - discovery.zen.ping.unicast.hosts=odfe-node1\n    ulimits:\n      memlock:\n        soft: -1\n        hard: -1\n    volumes:\n      - odfe-data2:/usr/share/elasticsearch/data\n    networks:\n      - odfe-net\n  kibana:\n    image: amazon/opendistro-for-elasticsearch-kibana:0.7.0\n    container_name: odfe-kibana\n    ports:\n      - 5601:5601\n    expose:\n      - &amp;quot;5601&amp;quot;\n    environment:\n      ELASTICSEARCH_URL: https://odfe-node1:9200\n    networks:\n      - odfe-net\n\nvolumes:\n  odfe-data1:\n  odfe-data2:\n\nnetworks:\n  odfe-net:\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;&lt;code&gt;docker-compose up&lt;/code&gt;&lt;br&gt;\ncheck &lt;code&gt;curl -XGET https://localhost:9200 -u admin:admin --insecure&lt;/code&gt;&lt;/p&gt;\n&lt;p&gt;Kibana access&lt;br&gt;\n&lt;code&gt;http://localhost:5601&lt;/code&gt;&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;open-distro-for-elasticsearch&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Open Distro for Elasticsearch&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-08-09 09:32:06&#34;,&#34;dateFormat&#34;:&#34;2019-08-09&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/open-distro-for-elasticsearch/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;2 min read&#34;,&#34;time&#34;:79000,&#34;words&#34;:216,&#34;minutes&#34;:2},&#34;description&#34;:&#34;运行 Open Distro for Elasticsearch\ndocker pull amazon/opendistro-for-elasticsearch:0.7.0\ndocker pull amazon/opendistro-for...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;To start, set the type of proxy you are using and the address and port on which to reach it:&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt;gcloud config set proxy/type PROXY_TYPE\ngcloud config set proxy/address PROXY_IP_ADDRESS\ngcloud config set proxy/port PROXY_PORT\n...\ngcloud config set proxy/username USERNAME\ngcloud config set proxy/password PASSWORD\n&lt;/code&gt;&lt;/pre&gt;\n&#34;,&#34;fileName&#34;:&#34;gcloud-proxy&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;gcloud proxy&#34;,&#34;tags&#34;:[{&#34;index&#34;:-1,&#34;name&#34;:&#34;GCP&#34;,&#34;slug&#34;:&#34;Ioi2TlpIY&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/Ioi2TlpIY/&#34;}],&#34;date&#34;:&#34;2019-08-04 16:24:28&#34;,&#34;dateFormat&#34;:&#34;2019-08-04&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/gcloud-proxy/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:18000,&#34;words&#34;:50,&#34;minutes&#34;:1},&#34;description&#34;:&#34;To start, set the type of proxy you are using and the address and port on which to reach it:\ngcloud config set proxy/typ...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;Iterm2 proxy&lt;br&gt;\nexport http_proxy=socks5://127.0.0.1:2080&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;iterm2-proxy&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Iterm2 sockes proxy&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-08-04 16:03:48&#34;,&#34;dateFormat&#34;:&#34;2019-08-04&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/iterm2-proxy/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:3000,&#34;words&#34;:10,&#34;minutes&#34;:1},&#34;description&#34;:&#34;Iterm2 proxy\nexport http_proxy=socks5://127.0.0.1:2080\n&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;https://medium.com/@pmvk/tips-to-crack-certified-kubernetes-administrator-cka-exam-c949c7a9bea1&lt;br&gt;\nhttps://github.com/arush-sal/cka-practice-environment&lt;/p&gt;\n&lt;p&gt;https://blog.csdn.net/deerjoe/article/details/86300826&lt;br&gt;\nhttps://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93/&lt;br&gt;\nhttps://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93-2/&lt;br&gt;\nhttps://chenleji.github.io/2018/11/07/CKA%E8%80%83%E8%AF%95%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93-3/&lt;/p&gt;\n&lt;p&gt;材料：&lt;br&gt;\nhttps://jimmysong.io/kubernetes-handbook/&lt;/p&gt;\n&lt;p&gt;Pod Affinity(亲和性)？&lt;br&gt;\n配置访问cluster&lt;br&gt;\n证书&lt;br&gt;\nOther:&lt;br&gt;\nhttps://docs.google.com/spreadsheets/d/10NltoF_6y3mBwUzQ4bcQLQfCE1BWSgUDcJXy-Qp2JEU/edit?usp=sharing&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;cka&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;CKA&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-07-30 14:28:56&#34;,&#34;dateFormat&#34;:&#34;2019-07-30&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/cka/&#34;,&#34;hideInList&#34;:true,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:50000,&#34;words&#34;:140,&#34;minutes&#34;:1},&#34;description&#34;:&#34;https://medium.com/@pmvk/tips-to-crack-certified-kubernetes-administrator-cka-exam-c949c7a9bea1\nhttps://github.com/arush...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;CoreDNS&lt;/p&gt;\n&lt;pre&gt;&lt;code&gt;$kubectl get pods --all-namespaces\nNAMESPACE     NAME                                              READY   STATUS              RESTARTS   AGE\nkube-system   pod/coredns-576cbf47c7-6qbtq                      0/1     Pending\n&lt;/code&gt;&lt;/pre&gt;\n&lt;pre&gt;&lt;code&gt;systemctl status kubelet\njournalctl -xeu kubelet\n\nJul 29 02:25:50 controller-0 kubelet[8594]: W0729 02:25:50.685951    8594 cni.go:213] Unable to update cni config: No networks found in /etc/cni/net.d\nJul 29 02:25:51 controller-0 kubelet[8594]: E0729 02:25:51.343631    8594 kubelet.go:2169] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network\n&lt;/code&gt;&lt;/pre&gt;\n&lt;p&gt;missing loopback binary of CNI at &lt;code&gt;/opt/cni/bin&lt;/code&gt;, a CNI plugin must be installed,You must install a pod network add-on so that your pods can communicate with each other.&lt;br&gt;\nhttps://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;kubeadm-init-coredns-pending&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;Kubeadm init - CoreDNS Pending &#34;,&#34;tags&#34;:[{&#34;name&#34;:&#34;k8s&#34;,&#34;slug&#34;:&#34;k8s&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/k8s/&#34;}],&#34;date&#34;:&#34;2019-07-29 10:26:50&#34;,&#34;dateFormat&#34;:&#34;2019-07-29&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/kubeadm-init-coredns-pending/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:49000,&#34;words&#34;:132,&#34;minutes&#34;:1},&#34;description&#34;:&#34;CoreDNS\n$kubectl get pods --all-namespaces\nNAMESPACE     NAME                                              READY   STATU...&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;https://www.qikqiak.com/post/install-efk-stack-on-k8s/&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;efk&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;EFK&#34;,&#34;tags&#34;:[],&#34;date&#34;:&#34;2019-07-05 14:10:01&#34;,&#34;dateFormat&#34;:&#34;2019-07-05&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/efk/&#34;,&#34;hideInList&#34;:true,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:3000,&#34;words&#34;:10,&#34;minutes&#34;:1},&#34;description&#34;:&#34;https://www.qikqiak.com/post/install-efk-stack-on-k8s/\n&#34;,&#34;toc&#34;:&#34;&#34;},{&#34;content&#34;:&#34;&lt;p&gt;用于查看GCP 上 Disk 那些是un-use&lt;/p&gt;\n&lt;pre&gt;&lt;code class=\&#34;language-bash\&#34;&gt;gcloud compute disks list --format=&amp;quot;json&amp;quot; | jq -c &#39;.[] | {creationTimestamp: .creationTimestamp, name: .name, sizeGb: .sizeGb, status: .status, users: .users} &#39;\n\n{&amp;quot;creationTimestamp&amp;quot;:&amp;quot;2019-04-03T04:11:59.666-07:00&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;xxxx-159571ec-pvc-4c5c970c-5601-11e9-9790-4201ac100006&amp;quot;,&amp;quot;sizeGb&amp;quot;:&amp;quot;100&amp;quot;,&amp;quot;status&amp;quot;:&amp;quot;READY&amp;quot;,&amp;quot;users&amp;quot;:[&amp;quot;https://www.googleapis.com/compute/v1/projects/xxx/zones/xxxxx/instances/xxx-int-2-1ce606b2-2m8j&amp;quot;]}\n{&amp;quot;creationTimestamp&amp;quot;:&amp;quot;2019-06-23T18:22:50.073-07:00&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;xxx-2-1ce606b2-2m8j&amp;quot;,&amp;quot;sizeGb&amp;quot;:&amp;quot;20&amp;quot;,&amp;quot;status&amp;quot;:&amp;quot;READY&amp;quot;,&amp;quot;users&amp;quot;:[&amp;quot;https://www.googleapis.com/compute/v1/projects/xxx/zones/xxx/instances/xxx-int-2-1ce606b2-2m8j&amp;quot;]}\n&lt;/code&gt;&lt;/pre&gt;\n&lt;figure data-type=\&#34;image\&#34; tabindex=\&#34;1\&#34;&gt;&lt;img src=\&#34;https://sendme365.github.io//post-images/1561721941528.png\&#34; alt=\&#34;\&#34; loading=\&#34;lazy\&#34;&gt;&lt;/figure&gt;\n&lt;p&gt;unknow:&lt;br&gt;\n想在output时获取users最后一个xxx-int-2-1ce606b2-2m8j值。 可能string slice ？&lt;/p&gt;\n&#34;,&#34;fileName&#34;:&#34;gcp-presistent-disks-check&#34;,&#34;abstract&#34;:&#34;&#34;,&#34;title&#34;:&#34;GCP Presistent Disks Check&#34;,&#34;tags&#34;:[{&#34;index&#34;:-1,&#34;name&#34;:&#34;GCP&#34;,&#34;slug&#34;:&#34;Ioi2TlpIY&#34;,&#34;used&#34;:true,&#34;link&#34;:&#34;https://sendme365.github.io/tag/Ioi2TlpIY/&#34;}],&#34;date&#34;:&#34;2019-06-28 10:33:24&#34;,&#34;dateFormat&#34;:&#34;2019-06-28&#34;,&#34;feature&#34;:&#34;&#34;,&#34;link&#34;:&#34;https://sendme365.github.io/post/gcp-presistent-disks-check/&#34;,&#34;hideInList&#34;:false,&#34;isTop&#34;:false,&#34;stats&#34;:{&#34;text&#34;:&#34;1 min read&#34;,&#34;time&#34;:58000,&#34;words&#34;:166,&#34;minutes&#34;:1},&#34;description&#34;:&#34;用于查看GCP 上 Disk 那些是un-use\ngcloud compute disks list --format=&amp;quot;json&amp;quot; | jq -c &#39;.[] | {creationTimestamp: .creatio...&#34;,&#34;toc&#34;:&#34;&#34;}]";
+  // var json = escape.substr(1, escape.length - 2);
+  // var datas = json.split(',');
+  // for (let i=0; i < datas.length; i++) {
+  //   let item = datas[i];
+  //   let attrs = item.split('34;:&#34')
+  //   debugger
+  //   console.log(datas[i])
+  // }
+  let escapeMap = new Map();
+  escapeMap.set('&#34;', '"');
+  escapeMap.set('&gt;', '>');
+  escapeMap.set('&#39;', "'");
+  escapeMap.set('&lt;', '<');
+  escapeMap.set('&quot;', '"');
+  escapeMap.set('&amp;', '&');
+</script> -->
+
+<!-- <script src="/media/js/mouse/peace.js"></script> -->
+</html>

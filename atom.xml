@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://sendme365.github.io/</id>
+    <title>想你的二十八画</title>
+    <updated>2020-04-25T04:55:27.491Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://sendme365.github.io/"/>
+    <link rel="self" href="https://sendme365.github.io/atom.xml"/>
+    <subtitle>你猜</subtitle>
+    <logo>https://sendme365.github.io/images/avatar.png</logo>
+    <icon>https://sendme365.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2020, 想你的二十八画</rights>
+    <entry>
+        <title type="html"><![CDATA[Frp 群晖 内网穿透]]></title>
+        <id>https://sendme365.github.io/post/frp-qun-hui-nei-wang-chuan-tou/</id>
+        <link href="https://sendme365.github.io/post/frp-qun-hui-nei-wang-chuan-tou/">
+        </link>
+        <updated>2019-11-14T00:55:08.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[泛域名证书]]></title>
+        <id>https://sendme365.github.io/post/fan-yu-ming-zheng-shu/</id>
+        <link href="https://sendme365.github.io/post/fan-yu-ming-zheng-shu/">
+        </link>
+        <updated>2019-11-12T05:37:29.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[CKA]]></title>
+        <id>https://sendme365.github.io/post/ccka/</id>
+        <link href="https://sendme365.github.io/post/ccka/">
+        </link>
+        <updated>2019-09-02T06:34:05.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Docker Desktop for mac 代理]]></title>
+        <id>https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/</id>
+        <link href="https://sendme365.github.io/post/docker-desktop-for-mac-dai-li/">
+        </link>
+        <updated>2019-08-28T23:56:14.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Static POD in Kubeadm Cluster 配置]]></title>
+        <id>https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/</id>
+        <link href="https://sendme365.github.io/post/static-pod-in-kubeadm-cluster/">
+        </link>
+        <updated>2019-08-16T02:40:39.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Google Container Registry]]></title>
+        <id>https://sendme365.github.io/post/google-container-registry/</id>
+        <link href="https://sendme365.github.io/post/google-container-registry/">
+        </link>
+        <updated>2019-08-13T01:40:19.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Open Distro for Elasticsearch]]></title>
+        <id>https://sendme365.github.io/post/open-distro-for-elasticsearch/</id>
+        <link href="https://sendme365.github.io/post/open-distro-for-elasticsearch/">
+        </link>
+        <updated>2019-08-09T01:32:06.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[gcloud proxy]]></title>
+        <id>https://sendme365.github.io/post/gcloud-proxy/</id>
+        <link href="https://sendme365.github.io/post/gcloud-proxy/">
+        </link>
+        <updated>2019-08-04T08:24:28.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Iterm2 sockes proxy]]></title>
+        <id>https://sendme365.github.io/post/iterm2-proxy/</id>
+        <link href="https://sendme365.github.io/post/iterm2-proxy/">
+        </link>
+        <updated>2019-08-04T08:03:48.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Kubeadm init - CoreDNS Pending ]]></title>
+        <id>https://sendme365.github.io/post/kubeadm-init-coredns-pending/</id>
+        <link href="https://sendme365.github.io/post/kubeadm-init-coredns-pending/">
+        </link>
+        <updated>2019-07-29T02:26:50.000Z</updated>
+    </entry>
+</feed>
